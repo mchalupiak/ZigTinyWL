@@ -1,24 +1,57 @@
 const std = @import("std");
 
+const wlr = @import("wlroots");
+const way = @import("wayland");
+const wl = way.server.wl;
+const xdg = way.server.xdg;
+const ext = way.server.ext;
+
+fn new_output_notify(listener: *wl.Listener(*wlr.Output), data: *wlr.Output) void {
+    _ = listener;
+    _ = data;
+}
+
+const zwl_server = struct {
+    wl_display: *wl.Server,
+    wl_eventloop: *wl.EventLoop,
+
+    backend: *wlr.Backend,
+
+    new_output: wl.Listener(*wlr.Output),
+    outputs: wl.list.Head(wlr.Output, .all_link),
+
+    pub fn init() !@This() {
+        const display = try wl.Server.create();
+        const event_loop = display.getEventLoop();
+        const backend = try wlr.Backend.autocreate(event_loop, null);
+        var outputs: wl.list.Head(wlr.Output, .all_link) = undefined;
+        outputs.init();
+        var new_output = wl.Listener(*wlr.Output).init(new_output_notify);
+        backend.events.new_output.add(&new_output);
+        return .{
+            .wl_display = display,
+            .wl_eventloop = event_loop,
+            .backend = backend,
+            .new_output = new_output,
+            .outputs = outputs,
+        };
+    }
+
+    pub fn start(zwl: zwl_server) void {
+        zwl.backend.start() catch {
+            zwl.wl_display.destroy();
+            return;
+        };
+
+        zwl.wl_display.run();
+        zwl.wl_display.destroy();
+    }
+};
+
 pub fn main() !void {
     // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
     std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
 
-    // stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
-
-    try stdout.print("Run `zig build test` to run the tests.\n", .{});
-
-    try bw.flush(); // don't forget to flush!
-}
-
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // try commenting this out and see if zig detects the memory leak!
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
+    const server = try zwl_server.init();
+    server.start();
 }

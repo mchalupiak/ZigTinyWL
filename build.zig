@@ -21,7 +21,7 @@ pub fn build(b: *std.Build) void {
     const scanner = Scanner.create(b, .{});
 
     scanner.addSystemProtocol("stable/xdg-shell/xdg-shell.xml");
-    scanner.addSystemProtocol("staging/ext-session-lock/ext-session-lock-v1.xml");
+    // scanner.addSystemProtocol("staging/ext-session-lock/ext-session-lock-v1.xml");
 
     // Pass the maximum version implemented by your wayland server or client.
     // Requests, events, enums, etc. from newer versions will not be generated,
@@ -29,22 +29,23 @@ pub fn build(b: *std.Build) void {
     // This will also generate code for interfaces created using the provided
     // global interface, in this example wl_keyboard, wl_pointer, xdg_surface,
     // xdg_toplevel, etc. would be generated as well.
-    scanner.generate("wl_seat", 4);
+    // scanner.generate("wl_seat", 4);
     // scanner.generate("xdg_wm_base", 3);
-    scanner.generate("ext_session_lock_manager_v1", 1);
+    // scanner.generate("ext_session_lock_manager_v1", 1);
 
-    scanner.generate("wl_compositor", 1);
-    scanner.generate("wl_shm", 1);
-    scanner.generate("xdg_wm_base", 1);
+    // scanner.generate("wl_compositor", 1);
+    // scanner.generate("wl_shm", 1);
+    // scanner.generate("xdg_wm_base", 1);
+    scanner.generate("wl_output", 4);
 
-    const lib = b.addStaticLibrary(.{
-        .name = "zmcw",
-        // In this case the main source file is merely a path, however, in more
-        // complicated build scripts, this could be a generated file.
-        .root_source_file = b.path("src/root.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
+    // const lib = b.addStaticLibrary(.{
+    //     .name = "zmcw",
+    //     // In this case the main source file is merely a path, however, in more
+    //     // complicated build scripts, this could be a generated file.
+    //     .root_source_file = b.path("src/root.zig"),
+    //     .target = target,
+    //     .optimize = optimize,
+    // });
 
     // import what was created above, plus zig wrapper libraries
     const wayland = b.createModule(.{ .root_source_file = scanner.result });
@@ -66,7 +67,7 @@ pub fn build(b: *std.Build) void {
     // This declares intent for the library to be installed into the standard
     // location when the user invokes the "install" step (the default step when
     // running `zig build`).
-    b.installArtifact(lib);
+    // b.installArtifact(lib);
 
     const exe = b.addExecutable(.{
         .name = "zmcw",
@@ -118,28 +119,28 @@ pub fn build(b: *std.Build) void {
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
 
-    // Creates a step for unit testing. This only builds the test executable
-    // but does not run it.
-    const lib_unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/root.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
-
-    const exe_unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/main.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
-
-    // Similar to creating the run step earlier, this exposes a `test` step to
-    // the `zig build --help` menu, providing a way for the user to request
-    // running the unit tests.
-    const test_step = b.step("test", "Run unit tests");
-    test_step.dependOn(&run_lib_unit_tests.step);
-    test_step.dependOn(&run_exe_unit_tests.step);
+    // // Creates a step for unit testing. This only builds the test executable
+    // // but does not run it.
+    // const lib_unit_tests = b.addTest(.{
+    //     .root_source_file = b.path("src/root.zig"),
+    //     .target = target,
+    //     .optimize = optimize,
+    // });
+    //
+    // const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
+    //
+    // const exe_unit_tests = b.addTest(.{
+    //     .root_source_file = b.path("src/main.zig"),
+    //     .target = target,
+    //     .optimize = optimize,
+    // });
+    //
+    // const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
+    //
+    // // Similar to creating the run step earlier, this exposes a `test` step to
+    // // the `zig build --help` menu, providing a way for the user to request
+    // // running the unit tests.
+    // const test_step = b.step("test", "Run unit tests");
+    // test_step.dependOn(&run_lib_unit_tests.step);
+    // test_step.dependOn(&run_exe_unit_tests.step);
 }
